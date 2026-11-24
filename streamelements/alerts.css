@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+*{box-sizing:border-box;margin:0}
+body{font-family:'Outfit',system-ui,sans-serif;overflow:hidden;background:transparent}
+#stage{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:60px;perspective:1400px}
+.card{display:flex;align-items:center;gap:26px;padding:22px 44px 22px 22px;border-radius:24px;color:#f3efff;
+  background:linear-gradient(135deg,rgba(32,18,58,.97),rgba(16,9,30,.97));border:2px solid rgba(139,92,246,.6);
+  box-shadow:0 0 50px rgba(139,92,246,.5),0 0 0 1px rgba(46,230,214,.3);opacity:0}
+.logo svg{width:110px;height:110px;display:block}
+.kind{font-size:22px;letter-spacing:.35em;text-transform:uppercase;color:#2ee6d6;font-weight:600}
+.who{font-size:58px;font-weight:800;line-height:1.1;margin-top:4px}
+.extra{font-size:24px;color:#a99cc9;margin-top:6px}
+.extra:empty{display:none}
+.card.in{animation:cardIn .9s cubic-bezier(.2,.9,.25,1.15) forwards}
+.card.in .logo svg{animation:spin 1.2s .1s cubic-bezier(.2,.8,.2,1)}
+.card.out{animation:cardOut .6s ease-in forwards}
+.card.static{opacity:1}
+@keyframes cardIn{0%{opacity:0;transform:rotateX(-80deg) translateY(-60px) scale(.8)}100%{opacity:1;transform:none}}
+@keyframes cardOut{from{opacity:1}to{opacity:0;transform:translateY(-40px) scale(.9)}}
+@keyframes spin{from{transform:rotate(-360deg) scale(.4)}}

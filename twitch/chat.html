@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Chat</title>
+<link rel="stylesheet" href="../shared/theme.css"><script src="../shared/config.js"></script>
+<style>
+  html,body{width:100%;height:100%}
+  #chat{position:absolute;inset:14px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;overflow:hidden}
+  .msg{font-size:21px;line-height:1.35;padding:8px 14px;border-radius:12px;background:rgba(139,92,246,.12);
+       border-left:3px solid var(--teal);animation:in .35s ease-out both;word-wrap:break-word}
+  .msg b{font-weight:700;margin-right:8px}
+  .msg.gone{animation:out .5s ease-in forwards}
+  @keyframes in{from{opacity:0;transform:translateX(24px)}}
+  @keyframes out{to{opacity:0;transform:translateX(-24px)}}
+</style></head><body>
+<div id="chat"></div>
+<script>
+/* Reads your Twitch chat anonymously (no login needed). ?channel=name overrides config.js */
+const q = new URLSearchParams(location.search);
+const channel = (q.get('channel') || OLEJIT.twitchChannel).toLowerCase();
+const box = document.getElementById('chat'), MAX = 12, LIFE = 90000;
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function add(name, color, text){
+  const d = document.createElement('div'); d.className = 'msg';
+  d.innerHTML = `<b style="color:${color||'#2ee6d6'}">${esc(name)}</b>${esc(text)}`;
+  box.appendChild(d);
+  while (box.children.length > MAX) box.removeChild(box.firstChild);
+  if (!q.has('preview')) setTimeout(() => { d.classList.add('gone'); setTimeout(() => d.parentNode && box.removeChild(d), 500); }, LIFE);
+}
+if (q.has('preview')) {
+  [['viewer_one','#2ee6d6',"yo let's goooo"],['NightShift','#c4b5fd','that jump was clean'],
+   ['pixelpanda','#f9a8d4','first time here, love the overlay'],['0Lejit0','#8b5cf6','welcome in everyone!']].forEach(m => add(...m));
+} else (function connect(){
+  const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  ws.onopen = () => { ws.send('CAP REQ :twitch.tv/tags'); ws.send('PASS SCHMOOPIIE');
+    ws.send('NICK justinfan' + Math.floor(Math.random()*80000+1000)); ws.send('JOIN #' + channel); };
+  ws.onmessage = e => e.data.split('\r\n').forEach(line => {
+    if (line.startsWith('PING')) return ws.send('PONG :tmi.twitch.tv');
+    const m = line.match(/^@(\S+) :(\w+)!\S+ PRIVMSG #\S+ :(.*)$/); if (!m) return;
+    const tags = Object.fromEntries(m[1].split(';').map(t => t.split('=')));
+    let text = m[3]; if (text.startsWith('\u0001ACTION ')) text = text.slice(8, -1);
+    if (text.startsWith('!')) return;               // hide bot commands
+    add(tags['display-name'] || m[2], tags.color, text);
+  });
+  ws.onclose = () => setTimeout(connect, 3000);
+})();
+</script></body></html>

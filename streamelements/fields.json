@@ -1,0 +1,10 @@
+{
+  "duration":        { "type": "number", "label": "Seconds each alert stays", "value": 6, "min": 2, "max": 20 },
+  "sound":           { "type": "sound-input", "label": "Alert sound (optional)", "value": "" },
+  "volume":          { "type": "slider", "label": "Volume", "value": 50, "min": 0, "max": 100, "step": 1 },
+  "show_follower":   { "type": "dropdown", "label": "Follows", "value": "yes", "options": { "yes": "Show", "no": "Hide" } },
+  "show_subscriber": { "type": "dropdown", "label": "Subs",    "value": "yes", "options": { "yes": "Show", "no": "Hide" } },
+  "show_cheer":      { "type": "dropdown", "label": "Bits",    "value": "yes", "options": { "yes": "Show", "no": "Hide" } },
+  "show_raid":       { "type": "dropdown", "label": "Raids",   "value": "yes", "options": { "yes": "Show", "no": "Hide" } },
+  "show_tip":        { "type": "dropdown", "label": "Tips",    "value": "yes", "options": { "yes": "Show", "no": "Hide" } }
+}
