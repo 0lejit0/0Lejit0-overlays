@@ -2,42 +2,120 @@
 <link rel="stylesheet" href="../shared/theme.css"><script src="../shared/config.js"></script>
 <style>
   html,body{width:100%;height:100%}
-  #chat{position:absolute;inset:14px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;overflow:hidden}
-  .msg{font-size:21px;line-height:1.35;padding:8px 14px;border-radius:12px;background:rgba(139,92,246,.12);
-       border-left:3px solid var(--teal);animation:in .35s ease-out both;word-wrap:break-word}
-  .msg b{font-weight:700;margin-right:8px}
-  .msg.gone{animation:out .5s ease-in forwards}
-  @keyframes in{from{opacity:0;transform:translateX(24px)}}
-  @keyframes out{to{opacity:0;transform:translateX(-24px)}}
+  #chat{position:absolute;inset:14px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 14%);
+    mask-image:linear-gradient(to bottom,transparent 0%,#000 14%)}
+  .msg{font-size:20px;line-height:1.38;padding:8px 13px;border-radius:12px;background:rgba(139,92,246,.12);
+       border-left:3px solid var(--teal);animation:in .32s cubic-bezier(.2,.9,.3,1) both;word-wrap:break-word;
+       box-shadow:0 2px 10px rgba(0,0,0,.22)}
+  .msg.action .txt{font-style:italic;opacity:.92}
+  .msg .head{display:inline;margin-right:7px}
+  .msg b{font-weight:700}
+  .badges{display:inline-flex;align-items:center;gap:4px;vertical-align:middle;margin-right:6px;transform:translateY(-1px)}
+  .bdg{display:inline-flex;align-items:center;justify-content:center;padding:1px 6px;border-radius:5px;
+       font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;line-height:1.35}
+  .bdg.broadcaster{background:#e11d48;color:#fff}
+  .bdg.moderator{background:#10b981;color:#06281e}
+  .bdg.vip{background:#ec4899;color:#fff}
+  .bdg.founder{background:#f59e0b;color:#271500}
+  .bdg.subscriber{background:rgba(139,92,246,.45);color:#f3efff;border:1px solid rgba(139,92,246,.7)}
+  .emote{height:1.45em;width:auto;vertical-align:middle;margin:-3px 2px}
+  .msg.gone{animation:out .45s ease-in forwards}
+  @keyframes in{from{opacity:0;transform:translateX(20px)}}
+  @keyframes out{to{opacity:0;transform:translateX(-20px)}}
 </style></head><body>
 <div id="chat"></div>
 <script>
-/* Reads your Twitch chat anonymously (no login needed). ?channel=name overrides config.js */
+/* Reads your Twitch chat anonymously (no login needed).
+   URL overrides: ?channel=name&max=14&life=90 */
 const q = new URLSearchParams(location.search);
+const cfg = (window.OLEJIT && OLEJIT.chat) || {};
 const channel = (q.get('channel') || OLEJIT.twitchChannel).toLowerCase();
-const box = document.getElementById('chat'), MAX = 12, LIFE = 90000;
+const MAX = parseInt(q.get('max'), 10) || cfg.maxMessages || 14;
+const LIFE = (q.has('life') ? parseFloat(q.get('life')) : (cfg.fadeSeconds ?? 90)) * 1000;
+const SHOW_BADGES = cfg.showBadges !== false;
+const SHOW_EMOTES = cfg.showEmotes !== false;
+const HIDE_CMDS = cfg.hideCommands !== false;
+const box = document.getElementById('chat');
+
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function add(name, color, text){
-  const d = document.createElement('div'); d.className = 'msg';
-  d.innerHTML = `<b style="color:${color||'#2ee6d6'}">${esc(name)}</b>${esc(text)}`;
+
+const BADGE_MAP = {
+  broadcaster: ['LIVE', 'broadcaster'],
+  moderator:   ['MOD',  'moderator'],
+  vip:         ['VIP',  'vip'],
+  founder:     ['FND',  'founder'],
+  subscriber:  ['SUB',  'subscriber']
+};
+
+function renderBadges(raw){
+  if (!SHOW_BADGES || !raw) return '';
+  const list = raw.split(',').map(b => b.split('/')[0]).filter(k => BADGE_MAP[k]);
+  if (!list.length) return '';
+  return `<span class="badges">${list.slice(0,3).map(k => `<span class="bdg ${BADGE_MAP[k][1]}">${BADGE_MAP[k][0]}</span>`).join('')}</span>`;
+}
+
+function renderMessage(text, emotesTag){
+  if (!SHOW_EMOTES || !emotesTag) return esc(text);
+  const chars = [...text];
+  const reps = [];
+  emotesTag.split('/').forEach(group => {
+    const [id, ranges] = group.split(':');
+    if (!id || !ranges) return;
+    ranges.split(',').forEach(r => {
+      const [s, e] = r.split('-').map(Number);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) reps.push([s, e, id]);
+    });
+  });
+  reps.sort((a, b) => a[0] - b[0]);
+  let out = '', cur = 0;
+  for (const [s, e, id] of reps) {
+    if (s < cur) continue;
+    out += esc(chars.slice(cur, s).join(''));
+    const alt = esc(chars.slice(s, e + 1).join(''));
+    out += `<img class="emote" alt="${alt}" src="https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(id)}/default/dark/2.0">`;
+    cur = e + 1;
+  }
+  return out + esc(chars.slice(cur).join(''));
+}
+
+function add(name, color, text, opts = {}){
+  const d = document.createElement('div');
+  d.className = 'msg' + (opts.action ? ' action' : '');
+  const c = color || '#2ee6d6';
+  const body = renderMessage(text, opts.emotes);
+  const bodyHtml = opts.action ? `<span class="txt" style="color:${c}">${body}</span>` : `<span class="txt">${body}</span>`;
+  d.innerHTML = `<span class="head">${renderBadges(opts.badges)}<b style="color:${c}">${esc(name)}</b></span>${bodyHtml}`;
   box.appendChild(d);
   while (box.children.length > MAX) box.removeChild(box.firstChild);
-  if (!q.has('preview')) setTimeout(() => { d.classList.add('gone'); setTimeout(() => d.parentNode && box.removeChild(d), 500); }, LIFE);
+  if (!q.has('preview') && LIFE > 0) {
+    setTimeout(() => { d.classList.add('gone'); setTimeout(() => d.parentNode && box.removeChild(d), 450); }, LIFE);
+  }
 }
+
 if (q.has('preview')) {
-  [['viewer_one','#2ee6d6',"yo let's goooo"],['NightShift','#c4b5fd','that jump was clean'],
-   ['pixelpanda','#f9a8d4','first time here, love the overlay'],['0Lejit0','#8b5cf6','welcome in everyone!']].forEach(m => add(...m));
+  [
+    ['viewer_one', '#2ee6d6', "yo let's goooo", { badges: 'subscriber/6' }],
+    ['NightShift', '#c4b5fd', 'that jump was clean', { badges: 'moderator/1' }],
+    ['pixelpanda', '#f9a8d4', 'first time here, love the overlay', { badges: 'vip/1' }],
+    ['0Lejit0',    '#8b5cf6', 'welcome in everyone!', { badges: 'broadcaster/1' }]
+  ].forEach(([n,c,t,o]) => add(n,c,t,o));
 } else (function connect(){
   const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-  ws.onopen = () => { ws.send('CAP REQ :twitch.tv/tags'); ws.send('PASS SCHMOOPIIE');
-    ws.send('NICK justinfan' + Math.floor(Math.random()*80000+1000)); ws.send('JOIN #' + channel); };
+  ws.onopen = () => {
+    ws.send('CAP REQ :twitch.tv/tags');
+    ws.send('PASS SCHMOOPIIE');
+    ws.send('NICK justinfan' + Math.floor(Math.random()*80000+1000));
+    ws.send('JOIN #' + channel);
+  };
   ws.onmessage = e => e.data.split('\r\n').forEach(line => {
     if (line.startsWith('PING')) return ws.send('PONG :tmi.twitch.tv');
     const m = line.match(/^@(\S+) :(\w+)!\S+ PRIVMSG #\S+ :(.*)$/); if (!m) return;
     const tags = Object.fromEntries(m[1].split(';').map(t => t.split('=')));
-    let text = m[3]; if (text.startsWith('\u0001ACTION ')) text = text.slice(8, -1);
-    if (text.startsWith('!')) return;               // hide bot commands
-    add(tags['display-name'] || m[2], tags.color, text);
+    let text = m[3], action = false;
+    if (text.startsWith('\u0001ACTION ') && text.endsWith('\u0001')) { text = text.slice(8, -1); action = true; }
+    if (HIDE_CMDS && text.startsWith('!')) return;
+    add(tags['display-name'] || m[2], tags.color, text, { badges: tags.badges, emotes: tags.emotes, action });
   });
   ws.onclose = () => setTimeout(connect, 3000);
 })();

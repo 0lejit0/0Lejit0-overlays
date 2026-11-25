@@ -1,14 +1,14 @@
 # 0Lejit0 Overlay Pack — Setup
 
 Dark purple + teal, circle-L logo. Twitch (1920×1080) and TikTok (1080×1920) versions.
-Pictures of every scene are in `previews/`.
+Open `preview.html` in your browser to inspect every scene, test alerts, and copy OBS URLs.
 
 ## 0. First: unzip somewhere permanent
 e.g. `Documents/0Lejit0-pack`. Keep the folder structure as-is — every page loads
 `shared/theme.css`, `shared/config.js` and `shared/logo.svg`.
 
-## 1. Check your handles
-Open `shared/config.js` in Notepad. Handles, banner timing and the chat channel all live there.
+## 1. Check your handles &amp; scene copy
+Open `shared/config.js` in a text editor. Handles, banner timing, chat options, and scene subtitles all live there.
 - Twitch `0Lejit0`, YouTube `@o-lejito` — set.
 - **TikTok `@0lejit0` is a guess — fix it if it's different.**
 After editing, right-click each browser source in OBS → **Refresh**.
@@ -31,31 +31,31 @@ For every file below: **Sources → + → Browser** →
 | TikTok scenes | `tiktok/*.html` | 1080×1920 |
 
 **Countdown length:** "Local file" can't take settings, so for a custom countdown untick Local file and use a URL instead:
-`file:///C:/Users/YOU/Documents/0Lejit0-pack/twitch/starting-soon.html?min=10` (minutes). Default is 5.
+`file:///Users/YOU/Documents/0Lejit0-pack/twitch/starting-soon.html?min=10` (minutes). Default is 5.
 
 ## 3. Line up your camera and chat (Gameplay scene)
 - **Facecam:** put the webcam source *under* the overlay, then resize it to fill the purple frame
-  bottom-right (frame is 448×252 at X 1432, Y 470). Hold **Alt** while dragging to crop.
+  bottom-right (frame is 448×252 at X 1432, Y 470). Hold **Alt** (Windows) or **Option** (Mac) while dragging to crop.
 - **Chat:** put `chat.html` (448×296) at **X 1432, Y 744** — it sits in the dark panel under the cam.
 - **Just Chatting:** cam fills the big frame (1280×720 at X 60, Y 150); for chat, use `chat.html`
   with size 480×870 at X 1380, Y 150.
 - **TikTok gameplay:** cam frame is 560×315 at X 60, Y 250 — kept inside TikTok's safe area
   (their buttons cover the right edge and bottom).
 
-The chat box reads your Twitch chat directly, no login needed. Messages starting with `!` are hidden.
+The chat box reads your Twitch chat directly (no login needed), renders Twitch emotes and role badges (`LIVE`, `MOD`, `VIP`, `FND`, `SUB`), and hides commands starting with `!`. You can override settings in `config.js` or via URL params (`?channel=name&max=14&life=90`).
 
 ## 4. Name banner
 Spins in with your name + all handles **every 15 minutes**, stays **12 seconds**, then is fully invisible.
 First appearance is 8 seconds after the scene loads. Change any of this in `config.js`.
-Want to watch it work? Add `?every=0.5&hold=4` to the file URL (every 30 s) — remove it after.
+Want to watch it work? Add `?banner=now&every=0.5&hold=4` to the file URL (every 30 s) — remove it after.
 
 ## 5. Alerts (StreamElements)
 1. streamelements.com → **Streaming tools → Overlays → New overlay** (1920×1080).
 2. **+ → Static/Custom → Custom widget** → **Open editor**.
 3. Paste each file into its tab: `alerts.html` → HTML, `alerts.css` → CSS,
    `alerts.js` → JS, `fields.json` → FIELDS. Delete what was there first. **Done**, then save.
-4. In the left panel choose an alert sound, volume, duration, and which alerts to show.
+4. In the left panel choose an alert sound, volume, duration, whether to show cheer/tip/sub messages, and which alerts to show.
 5. Copy the overlay URL → OBS **Browser** source, 1920×1080, on top of everything in every scene.
-6. Use the **Emulate** button in the StreamElements editor to fire a test follow/sub/raid.
+6. Use the **Emulate** button in the StreamElements editor (or `preview.html` locally) to fire a test follow/sub/raid.
 
-Covers follows, subs (and gift subs), bits, raids and tips. Alerts queue up and never overlap.
+Covers follows, subs (resubs &amp; gift subs with sender), bits, raids and tips. Alerts queue up and never overlap.

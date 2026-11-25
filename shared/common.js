@@ -14,17 +14,29 @@
   document.querySelectorAll('[data-name]').forEach(e => e.innerHTML = C.name.replace(/(\d)$/, '<b>$1</b>').replace(/^(\d)/, '<b>$1</b>'));
   document.querySelectorAll('[data-tagline]').forEach(e => e.textContent = C.tagline);
 
+  // apply optional scene copy overrides from config.js
+  const sceneEl = document.querySelector('[data-scene]');
+  if (sceneEl && C.scenes && C.scenes[sceneEl.dataset.scene]) {
+    const sc = C.scenes[sceneEl.dataset.scene];
+    const k = sceneEl.querySelector('.kicker'), t = sceneEl.querySelector('.title'), s = sceneEl.querySelector('.sub');
+    if (k && sc.kicker) k.textContent = sc.kicker;
+    if (t && sc.title) t.innerHTML = `${sc.title}<span class="dot">.</span>`;
+    if (s && sc.sub) s.textContent = sc.sub;
+  }
+
   // social chips row
   document.querySelectorAll('[data-socials]').forEach(row => {
-    row.innerHTML = C.socials.map(s => `<div class="chip">${ICONS[s.platform]}<span>${s.handle}</span></div>`).join('');
+    row.innerHTML = C.socials.map(s => `<div class="chip">${ICONS[s.platform] || ''}<span>${s.handle}</span></div>`).join('');
   });
 
   // rotating handle tag
   document.querySelectorAll('[data-rotator]').forEach(rot => {
-    rot.innerHTML = C.socials.map(s => `<span>${ICONS[s.platform]}${s.handle}</span>`).join('');
-    const items = [...rot.children]; let i = 0;
+    rot.innerHTML = C.socials.map(s => `<span>${ICONS[s.platform] || ''}${s.handle}</span>`).join('');
+    const items = [...rot.children];
+    if (!items.length) return;
+    let i = 0;
     items[0].classList.add('on');
-    if (preview) return;
+    if (preview || items.length < 2) return;
     setInterval(() => {
       const cur = items[i]; cur.classList.remove('on'); cur.classList.add('off');
       setTimeout(() => cur.classList.remove('off'), 700);
@@ -34,24 +46,34 @@
 
   // name banner: spins in every N minutes, holds, spins out, invisible in between
   document.querySelectorAll('[data-banner]').forEach(wrap => {
-    wrap.querySelector('.hs').innerHTML = C.socials.map(s => `<span>${ICONS[s.platform]}${s.handle}</span>`).join('');
+    wrap.querySelector('.hs').innerHTML = C.socials.map(s => `<span>${ICONS[s.platform] || ''}${s.handle}</span>`).join('');
     if (preview) { wrap.classList.add('show'); return; }
     const every = (parseFloat(q.get('every')) || C.bannerEveryMinutes) * 60000;
     const hold = (parseFloat(q.get('hold')) || C.bannerHoldSeconds) * 1000;
+    const delay = q.has('banner') ? 300 : C.bannerFirstDelaySeconds * 1000;
     const cycle = () => {
       wrap.classList.remove('hide'); wrap.classList.add('show');
       setTimeout(() => { wrap.classList.remove('show'); wrap.classList.add('hide');
-        setTimeout(() => wrap.classList.remove('hide'), 950); }, hold);
+        setTimeout(() => wrap.classList.remove('hide'), 900); }, hold);
     };
-    setTimeout(() => { cycle(); setInterval(cycle, every); }, C.bannerFirstDelaySeconds * 1000);
+    setTimeout(() => { cycle(); setInterval(cycle, every); }, delay);
   });
 
   // countdown: add ?min=10 to the URL (default 5). Shows "Starting now" at zero.
   document.querySelectorAll('[data-countdown]').forEach(el => {
-    const end = Date.now() + (parseFloat(q.get('min')) || 5) * 60000;
+    const totalMs = (parseFloat(q.get('min')) || 5) * 60000;
+    const end = Date.now() + totalMs;
+    const fill = el.closest('.count-wrap')?.querySelector('[data-countdown-fill]');
+    const fmt = sec => {
+      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+      const mm = String(m).padStart(2, '0'), ss = String(s).padStart(2, '0');
+      return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+    };
     const tick = () => {
-      const s = Math.max(0, Math.round((end - Date.now()) / 1000));
-      el.textContent = s ? `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}` : 'Starting now';
+      const rem = Math.max(0, end - Date.now());
+      const s = Math.round(rem / 1000);
+      el.textContent = s ? fmt(s) : 'Starting now';
+      if (fill) fill.style.transform = `scaleX(${preview ? 0.65 : (totalMs > 0 ? rem / totalMs : 0)})`;
     };
     tick(); if (!preview) setInterval(tick, 250);
   });
