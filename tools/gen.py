@@ -26,13 +26,6 @@ BANNER = '''<div class="banner-wrap" data-banner style="{pos}"><div class="banne
 <div><div class="nm" data-name></div><div class="hs"></div></div></div></div>'''
 TAG = '<div class="tag" style="{pos}"><img data-logo alt=""><div class="rot" data-rotator></div></div>'
 
-# Twitch gameplay: raised bottom-right facecam, chat panel below it
-tw_game = (TAG.format(pos='right:40px;top:410px') +
-  '<div class="frame" style="right:40px;top:470px;width:448px;height:252px"></div>' +
-  '<div class="panel" style="right:40px;top:744px;width:448px;height:296px"><div class="panel-hdr">Chat</div></div>' +
-  BANNER.format(pos='left:40px;bottom:40px'))
-open(f'{root}/twitch/gameplay.html','w').write(HEAD.format(t='Gameplay',cls='tw')+tw_game+TAIL)
-
 # Twitch Just Chatting: big cam left, chat right
 tw_jc = (AMB + '<div class="frame" style="left:60px;top:150px;width:1280px;height:720px"></div>' +
   '<div class="panel" style="left:1380px;top:150px;width:480px;height:870px"><div class="panel-hdr">Chat</div></div>' +
@@ -41,8 +34,10 @@ tw_jc = (AMB + '<div class="frame" style="left:60px;top:150px;width:1280px;heigh
   BANNER.format(pos='left:640px;top:890px'))
 open(f'{root}/twitch/just-chatting.html','w').write(HEAD.format(t='Just Chatting',cls='tw scene')+tw_jc+TAIL)
 
-# TikTok gameplay (1080x1920): cam top-left, inside TikTok's safe zone
-tt_game = (TAG.format(pos='left:60px;top:190px') +
-  '<div class="frame" style="left:60px;top:250px;width:560px;height:315px"></div>' +
-  BANNER.format(pos='left:60px;top:1300px'))
-open(f'{root}/tiktok/gameplay.html','w').write(HEAD.format(t='Gameplay',cls='tt')+tt_game+TAIL)
+# TikTok gameplay (1080x1920): cam + transparent Twitch chat side-by-side at top safe zone
+tt_game = (HEAD.format(t='Gameplay — TikTok Fullscreen',cls='tt').replace('</head>', '<style>.panel.transparent{background:transparent;backdrop-filter:none}</style></head>') +
+  TAG.format(pos='left:48px;top:140px') +
+  '<div class="frame" style="left:48px;top:190px;width:480px;height:270px"><div class="panel-hdr">Cam</div></div>' +
+  '<div class="panel transparent" style="left:552px;top:190px;width:480px;height:270px"><div class="panel-hdr">Twitch Chat</div></div>' +
+  BANNER.format(pos='left:48px;bottom:420px') + TAIL)
+open(f'{root}/tiktok/gameplay.html','w').write(tt_game)

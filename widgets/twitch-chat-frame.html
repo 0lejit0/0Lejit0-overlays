@@ -1,0 +1,106 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Twitch Chat Outline</title>
+<link rel="stylesheet" href="../shared/theme.css"><script src="../shared/config.js"></script>
+<style>
+  html,body{width:100vw;height:100vh;background:transparent;overflow:hidden}
+  .box{position:absolute;inset:8px;border-radius:16px;background:transparent;
+    border:2px solid rgba(46,230,214,.72);
+    box-shadow:0 0 22px rgba(46,230,214,.22)}
+  .box::before,.box::after{content:"";position:absolute;width:24px;height:24px;border:3px solid var(--purple);
+    filter:drop-shadow(0 0 6px rgba(139,92,246,.5))}
+  .box::before{top:-5px;left:-5px;border-right:0;border-bottom:0;border-top-left-radius:18px}
+  .box::after{bottom:-5px;right:-5px;border-left:0;border-top:0;border-bottom-right-radius:18px;border-color:var(--teal);
+    filter:drop-shadow(0 0 6px rgba(46,230,214,.5))}
+  .hdr{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:6px;z-index:2;
+    font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--text);
+    text-shadow:0 1px 4px rgba(0,0,0,.95);opacity:.88}
+  .hdr::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  .nolabel .hdr{display:none}
+  #chat{position:absolute;inset:32px 10px 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 16%);
+    mask-image:linear-gradient(to bottom,transparent 0%,#000 16%)}
+  .msg{font-size:17px;line-height:1.34;padding:6px 10px;border-radius:10px;background:rgba(13,7,22,.44);
+    border-left:3px solid var(--teal);animation:in .3s cubic-bezier(.2,.9,.3,1) both;word-wrap:break-word;
+    text-shadow:0 1px 3px rgba(0,0,0,.95)}
+  .msg.action .txt{font-style:italic;opacity:.92}
+  .msg .head{display:inline;margin-right:6px}
+  .msg b{font-weight:700}
+  .badges{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-right:5px;transform:translateY(-1px)}
+  .bdg{display:inline-flex;align-items:center;justify-content:center;padding:1px 5px;border-radius:4px;
+    font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;line-height:1.3}
+  .bdg.broadcaster{background:#e11d48;color:#fff}
+  .bdg.moderator{background:#10b981;color:#06281e}
+  .bdg.vip{background:#ec4899;color:#fff}
+  .bdg.founder{background:#f59e0b;color:#271500}
+  .bdg.subscriber{background:rgba(139,92,246,.45);color:#f3efff;border:1px solid rgba(139,92,246,.7)}
+  .emote{height:1.4em;width:auto;vertical-align:middle;margin:-3px 2px}
+  .msg.gone{animation:out .45s ease-in forwards}
+  @keyframes in{from{opacity:0;transform:translateX(16px)}}
+  @keyframes out{to{opacity:0;transform:translateX(-16px)}}
+</style></head>
+<body>
+<div class="box" id="b">
+  <div class="hdr" id="lbl">Twitch Chat</div>
+  <div id="chat"></div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+if (q.has('nolabel')) document.getElementById('b').classList.add('nolabel');
+if (q.get('label')) document.getElementById('lbl').textContent = q.get('label');
+
+if (!q.has('outline') && !q.has('preview')) {
+  const cfg = (window.OLEJIT && OLEJIT.chat) || {};
+  const channel = (q.get('channel') || OLEJIT.twitchChannel).toLowerCase();
+  const MAX = parseInt(q.get('max'), 10) || cfg.maxMessages || 10;
+  const LIFE = (q.has('life') ? parseFloat(q.get('life')) : (cfg.fadeSeconds ?? 60)) * 1000;
+  const SHOW_BADGES = cfg.showBadges !== false, SHOW_EMOTES = cfg.showEmotes !== false, HIDE_CMDS = cfg.hideCommands !== false;
+  const box = document.getElementById('chat');
+  const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const BADGE_MAP = { broadcaster:['LIVE','broadcaster'], moderator:['MOD','moderator'], vip:['VIP','vip'], founder:['FND','founder'], subscriber:['SUB','subscriber'] };
+  const renderBadges = raw => {
+    if (!SHOW_BADGES || !raw) return '';
+    const list = raw.split(',').map(b => b.split('/')[0]).filter(k => BADGE_MAP[k]);
+    return list.length ? `<span class="badges">${list.slice(0,3).map(k => `<span class="bdg ${BADGE_MAP[k][1]}">${BADGE_MAP[k][0]}</span>`).join('')}</span>` : '';
+  };
+  const renderMessage = (text, emotesTag) => {
+    if (!SHOW_EMOTES || !emotesTag) return esc(text);
+    const chars = [...text], reps = [];
+    emotesTag.split('/').forEach(g => {
+      const [id, ranges] = g.split(':'); if (!id || !ranges) return;
+      ranges.split(',').forEach(r => { const [s, e] = r.split('-').map(Number); if (!Number.isNaN(s) && !Number.isNaN(e)) reps.push([s, e, id]); });
+    });
+    reps.sort((a, b) => a[0] - b[0]);
+    let out = '', cur = 0;
+    for (const [s, e, id] of reps) {
+      if (s < cur) continue;
+      out += esc(chars.slice(cur, s).join(''));
+      out += `<img class="emote" alt="${esc(chars.slice(s, e + 1).join(''))}" src="https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(id)}/default/dark/2.0">`;
+      cur = e + 1;
+    }
+    return out + esc(chars.slice(cur).join(''));
+  };
+  function add(name, color, text, opts = {}){
+    const d = document.createElement('div'); d.className = 'msg' + (opts.action ? ' action' : '');
+    const c = color || '#2ee6d6', body = renderMessage(text, opts.emotes);
+    d.innerHTML = `<span class="head">${renderBadges(opts.badges)}<b style="color:${c}">${esc(name)}</b></span>${opts.action ? `<span class="txt" style="color:${c}">${body}</span>` : `<span class="txt">${body}</span>`}`;
+    box.appendChild(d);
+    while (box.children.length > MAX) box.removeChild(box.firstChild);
+    if (LIFE > 0) setTimeout(() => { d.classList.add('gone'); setTimeout(() => d.parentNode && box.removeChild(d), 450); }, LIFE);
+  }
+  (function connect(){
+    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+    ws.onopen = () => { ws.send('CAP REQ :twitch.tv/tags'); ws.send('PASS SCHMOOPIIE');
+      ws.send('NICK justinfan' + Math.floor(Math.random()*80000+1000)); ws.send('JOIN #' + channel); };
+    ws.onmessage = e => e.data.split('\r\n').forEach(line => {
+      if (line.startsWith('PING')) return ws.send('PONG :tmi.twitch.tv');
+      const m = line.match(/^@(\S+) :(\w+)!\S+ PRIVMSG #\S+ :(.*)$/); if (!m) return;
+      const tags = Object.fromEntries(m[1].split(';').map(t => t.split('=')));
+      let text = m[3], action = false;
+      if (text.startsWith('\u0001ACTION ') && text.endsWith('\u0001')) { text = text.slice(8, -1); action = true; }
+      if (HIDE_CMDS && text.startsWith('!')) return;
+      add(tags['display-name'] || m[2], tags.color, text, { badges: tags.badges, emotes: tags.emotes, action });
+    });
+    ws.onclose = () => setTimeout(connect, 3000);
+  })();
+}
+</script>
+</body></html>

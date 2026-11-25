@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>0Lejit0 GTA VI Overlays — Live Preview &amp; Tester</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap');
+  :root{--bg:#0b0514;--panel:#160b24;--line:rgba(255,61,139,.45);--pink:#ff3d8b;--teal:#2ee6d6;--text:#fff5fa;--muted:#cbbad8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:grid;grid-template-columns:300px 1fr}
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;min-height:0}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:40px;height:40px}
+  .brand h1{font-size:19px;font-weight:900}
+  .brand p{font-size:12px;color:var(--teal);font-weight:600}
+  .grp h2{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+  .list{display:flex;flex-direction:column;gap:6px}
+  button{font:inherit;color:var(--text);background:rgba(255,61,139,.09);border:1px solid rgba(255,61,139,.28);
+    padding:9px 12px;border-radius:10px;text-align:left;cursor:pointer;font-size:14px;font-weight:600;transition:.15s}
+  button:hover{background:rgba(255,61,139,.2);border-color:var(--pink)}
+  button.active{background:linear-gradient(135deg,rgba(255,61,139,.32),rgba(46,230,214,.18));border-color:var(--teal)}
+  .ctrl{display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)}
+  .ctrl label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .ctrl input[type=number]{width:70px;background:#0b0514;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit}
+  .row{display:flex;gap:6px;flex-wrap:wrap}
+  .row button{flex:1;text-align:center;font-size:12px;padding:7px 8px}
+  main{display:flex;flex-direction:column;padding:22px;gap:14px;overflow:hidden;min-width:0;min-height:0}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:0}
+  .url{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .stage-wrap{flex:1;min-width:0;min-height:0;background:radial-gradient(circle at 50% 40%,#240e34,#07030e);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}
+  .frame-box{position:absolute;left:50%;top:50%;transform-origin:center center;box-shadow:0 24px 60px rgba(0,0,0,.65);
+    background:linear-gradient(160deg,#182232 0%,#3a1834 52%,#102a2e 100%);overflow:hidden}
+  .frame-box.checker{background-color:#120b1f;
+    background-image:linear-gradient(45deg,#1b122b 25%,transparent 25%),linear-gradient(-45deg,#1b122b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1b122b 75%),linear-gradient(-45deg,transparent 75%,#1b122b 75%);
+    background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+  iframe{border:0;display:block;width:100%;height:100%;position:relative;z-index:2}
+
+  .mock-game{position:absolute;inset:0;z-index:1;pointer-events:none;display:none}
+  .mock-game.on{display:block}
+  .mock-road{position:absolute;inset:0;background:
+    radial-gradient(circle at 30% 42%,rgba(255,138,76,.34),transparent 42%),
+    radial-gradient(circle at 74% 38%,rgba(46,230,214,.28),transparent 38%),
+    radial-gradient(circle at 50% 72%,rgba(255,61,139,.25),transparent 50%),
+    linear-gradient(180deg,#120b24 0%,#2b1338 48%,#131826 49%,#0b0f18 100%)}
+  .mock-sun{position:absolute;left:28%;top:22%;width:220px;height:220px;border-radius:50%;
+    background:linear-gradient(180deg,#ffb84d,#ff3d8b);opacity:.55;filter:blur(2px)}
+  .mock-grid{position:absolute;left:0;right:0;bottom:0;height:51%;
+    background-image:linear-gradient(rgba(46,230,214,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(255,61,139,.16) 1px,transparent 1px);
+    background-size:90px 44px;transform:perspective(500px) rotateX(48deg);transform-origin:bottom center;opacity:.65}
+  .mock-hud-map{position:absolute;left:34px;bottom:34px;width:240px;height:148px;border-radius:10px;
+    border:2px solid rgba(255,255,255,.35);background:rgba(12,18,28,.68);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .mock-hud-map::after{content:"VICE CITY · OCEAN BEACH";position:absolute;left:12px;bottom:10px;font-size:12px;letter-spacing:.12em;color:rgba(255,255,255,.7);font-weight:700}
+  .mock-hud-top{position:absolute;right:34px;top:28px;text-align:right;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.85)}
+  .mock-hud-top .stars{font-size:24px;letter-spacing:4px;color:#ffb84d}
+  .mock-hud-top .cash{font-size:30px;color:#4ade80;margin-top:2px}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand">
+    <img src="shared/logo.svg" alt="">
+    <div><h1>0Lejit0 × GTA VI</h1><p>Modular OBS Sources</p></div>
+  </div>
+
+  <div class="grp">
+    <h2>Twitch (1920×1080)</h2>
+    <div class="list" id="tw-list"></div>
+  </div>
+
+  <div class="grp">
+    <h2>Individual OBS Sources</h2>
+    <div class="list" id="bx-list"></div>
+  </div>
+
+  <div class="grp">
+    <h2>TikTok (1080×1920)</h2>
+    <div class="list" id="tt-list"></div>
+  </div>
+
+  <div class="grp">
+    <h2>Alerts</h2>
+    <div class="list" id="wg-list"></div>
+  </div>
+
+  <div class="grp">
+    <h2>Options</h2>
+    <div class="ctrl">
+      <label>Mock game backdrop <input type="checkbox" id="mock" checked></label>
+      <label>Countdown (min) <input type="number" id="min" value="5" min="1" max="180"></label>
+      <label>Freeze preview <input type="checkbox" id="freeze"></label>
+      <div class="row">
+        <button id="btn-banner">Trigger Banner</button>
+        <button id="btn-reload">Reload</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp" id="alert-box" style="display:none">
+    <h2>Emulate Alert</h2>
+    <div class="row">
+      <button onclick="fireAlert('follower-latest',{name:'pixelpanda'})">Follow</button>
+      <button onclick="fireAlert('subscriber-latest',{name:'NightShift',amount:6})">Resub</button>
+      <button onclick="fireAlert('subscriber-latest',{name:'viewer_one',gifted:true,sender:'0Lejit0'})">Gift</button>
+      <button onclick="fireAlert('cheer-latest',{name:'cinder',amount:500,message:'Vice City hype!'})">500 Bits</button>
+      <button onclick="fireAlert('raid-latest',{name:'frostbyte',amount:42})">Raid</button>
+      <button onclick="fireAlert('tip-latest',{name:'nova',amount:10,message:'clean driving!'})">$10 Tip</button>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <div class="bar">
+    <span class="url" id="url-out"></span>
+    <button id="btn-copy">Copy OBS URL</button>
+  </div>
+  <div class="stage-wrap" id="wrap">
+    <div class="frame-box" id="box">
+      <div class="mock-game" id="mock-game">
+        <div class="mock-road"></div>
+        <div class="mock-sun"></div>
+        <div class="mock-grid"></div>
+        <div class="mock-hud-map"></div>
+        <div class="mock-hud-top"><div class="stars">★★★☆☆</div><div class="cash">$48,250</div></div>
+      </div>
+      <iframe id="frm"></iframe>
+    </div>
+  </div>
+</main>
+
+<script>
+const SCENES = {
+  tw: [
+    ['Gameplay (Clean)', 'twitch/gameplay.html', 1920, 1080],
+    ['Starting Soon', 'twitch/starting-soon.html', 1920, 1080],
+    ['Be Right Back', 'twitch/brb.html', 1920, 1080],
+    ['Stream Ending', 'twitch/ending.html', 1920, 1080],
+    ['Just Chatting', 'twitch/just-chatting.html', 1920, 1080]
+  ],
+  bx: [
+    ['Facecam Outline', 'widgets/cam-frame.html', 480, 270],
+    ['Twitch Chat Outline', 'widgets/twitch-chat-frame.html', 380, 260],
+    ['TikTok Chat Outline', 'widgets/tiktok-chat-frame.html', 380, 260],
+    ['Handle Tag (Rotating)', 'widgets/handle-tag.html', 320, 56],
+    ['Name Banner (3D)', 'widgets/name-banner.html', 640, 140]
+  ],
+  tt: [
+    ['Gameplay (Fullscreen)', 'tiktok/gameplay.html', 1080, 1920],
+    ['Starting Soon', 'tiktok/starting-soon.html', 1080, 1920],
+    ['Be Right Back', 'tiktok/brb.html', 1080, 1920],
+    ['Stream Ending', 'tiktok/ending.html', 1080, 1920]
+  ],
+  wg: [
+    ['Alerts (SE)', 'streamelements/alerts.html', 1200, 380]
+  ]
+};
+
+let cur = SCENES.tw[0], forceBanner = false;
+const frm = document.getElementById('frm'), box = document.getElementById('box'), wrap = document.getElementById('wrap');
+const minIn = document.getElementById('min'), freezeIn = document.getElementById('freeze'), mockIn = document.getElementById('mock'), urlOut = document.getElementById('url-out');
+const mockGame = document.getElementById('mock-game');
+
+function makeBtns(id, arr){
+  const el = document.getElementById(id);
+  arr.forEach(item => {
+    const b = document.createElement('button');
+    b.textContent = item[0];
+    b.onclick = () => {
+      document.querySelectorAll('aside .list button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); cur = item; forceBanner = false; load();
+    };
+    el.appendChild(b);
+  });
+}
+makeBtns('tw-list', SCENES.tw); makeBtns('bx-list', SCENES.bx); makeBtns('tt-list', SCENES.tt); makeBtns('wg-list', SCENES.wg);
+document.querySelector('#tw-list button').classList.add('active');
+
+function buildUrl(bust){
+  const [, path] = cur;
+  const params = new URLSearchParams();
+  if (freezeIn.checked) params.set('preview', '');
+  if (path.includes('starting-soon')) params.set('min', minIn.value || 5);
+  if (forceBanner || path.includes('name-banner')) { params.set('banner', 'now'); params.set('every', '0.35'); params.set('hold', '6'); }
+  if (bust) params.set('_', Date.now());
+  const qs = params.toString().replace(/=&|=$/g, m => m.endsWith('&') ? '&' : '');
+  return path + (qs ? '?' + qs : '');
+}
+
+function fit(){
+  const [,, w, h] = cur;
+  const r = wrap.getBoundingClientRect();
+  const s = Math.min((r.width - 36) / w, (r.height - 36) / h, 1);
+  box.style.width = w + 'px'; box.style.height = h + 'px';
+  box.style.transform = `translate(-50%, -50%) scale(${s})`;
+}
+
+function load(){
+  const isAlert = cur[1].includes('alerts.html');
+  document.getElementById('alert-box').style.display = isAlert ? '' : 'none';
+  if (isAlert) {
+    mockGame.classList.remove('on');
+    box.classList.add('checker');
+    loadAlertPreview();
+  } else {
+    const isGame = cur[1].includes('gameplay.html');
+    const isWidget = cur[1].includes('widgets/');
+    mockGame.classList.toggle('on', mockIn.checked && isGame);
+    box.classList.toggle('checker', isWidget);
+    frm.removeAttribute('srcdoc');
+    frm.src = buildUrl(true);
+    urlOut.textContent = new URL(buildUrl(false), location.href).href;
+  }
+  fit();
+}
+
+function loadAlertPreview(){
+  urlOut.textContent = 'StreamElements Custom Widget (copy HTML / CSS / JS / FIELDS)';
+  frm.srcdoc = `<!doctype html><html><head><link rel="stylesheet" href="streamelements/alerts.css"></head>
+    <body><div id="stage"><div class="card static" id="card" data-type="follower">
+      <div class="logo"><svg viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d8b"/><stop offset="0.5" stop-color="#ff8a4c"/><stop offset="1" stop-color="#2ee6d6"/></linearGradient></defs><circle cx="50" cy="50" r="41" fill="#0b0818" stroke="url(#g)" stroke-width="8"/><path d="M41 29 V68 H65" fill="none" stroke="#fff5fa" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="65" cy="31" r="5" fill="#2ee6d6"/></svg></div>
+      <div class="txt"><div class="kind" id="kind">New follower</div><div class="who" id="who">pixelpanda</div><div class="extra" id="extra"></div><div class="msg" id="msg"></div></div>
+      <div class="bar"><i id="bar"></i></div>
+    </div></div><audio id="snd"></audio><script src="streamelements/alerts.js"><\/script></body></html>`;
+}
+
+window.fireAlert = (listener, event) => {
+  frm.contentWindow.dispatchEvent(new CustomEvent('onEventReceived', { detail: { listener, event } }));
+};
+
+minIn.onchange = freezeIn.onchange = mockIn.onchange = load;
+document.getElementById('btn-reload').onclick = load;
+document.getElementById('btn-banner').onclick = () => { forceBanner = true; freezeIn.checked = false; load(); };
+document.getElementById('btn-copy').onclick = () => {
+  navigator.clipboard?.writeText(urlOut.textContent);
+  const b = document.getElementById('btn-copy'); b.textContent = 'Copied!';
+  setTimeout(() => b.textContent = 'Copy OBS URL', 1200);
+};
+window.addEventListener('resize', fit);
+load();
+</script>
+</body>
+</html>

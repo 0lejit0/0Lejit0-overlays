@@ -1,61 +1,34 @@
 # 0Lejit0 Overlay Pack — Setup
 
 Dark purple + teal, circle-L logo. Twitch (1920×1080) and TikTok (1080×1920) versions.
-Open `preview.html` in your browser to inspect every scene, test alerts, and copy OBS URLs.
+Open `preview.html` in your browser to inspect every scene, individual outline/banner source, and test alerts.
 
-## 0. First: unzip somewhere permanent
-e.g. `Documents/0Lejit0-pack`. Keep the folder structure as-is — every page loads
-`shared/theme.css`, `shared/config.js` and `shared/logo.svg`.
+## 1. Twitch Gameplay Scene (Modular Full-Screen Setup)
+Layer these sources in OBS from **bottom to top**:
+1. **Game Capture** — full **1920×1080**.
+2. **`twitch/gameplay.html`** (`1920×1080`) — clean, static transparent full-screen corner accents only.
+3. **Webcam** — place and resize anywhere you like.
+4. **`widgets/cam-frame.html`** — purple + teal facecam outline. Set any 16:9 size (e.g. `480×270`) and drag over your webcam. *(Add `?nolabel` to hide `CAM`.)*
+5. **`widgets/twitch-chat-frame.html`** — transparent Twitch chat cutout with live Twitch chat built in. Set any size (e.g. `380×260`) and drag anywhere. *(Add `?outline` for an empty cutout, or `?nolabel` to hide the header.)*
+6. **`widgets/tiktok-chat-frame.html`** — transparent TikTok chat cutout. Set any size (e.g. `380×260`) and place your TikTok chat widget inside it.
+7. **`widgets/handle-tag.html`** (`320×56`) — standalone rotating social handle pill.
+8. **`widgets/name-banner.html`** (`640×140`) — standalone 3D spinning name banner (spins in every 15 minutes).
 
-## 1. Check your handles &amp; scene copy
-Open `shared/config.js` in a text editor. Handles, banner timing, chat options, and scene subtitles all live there.
-- Twitch `0Lejit0`, YouTube `@o-lejito` — set.
-- **TikTok `@0lejit0` is a guess — fix it if it's different.**
-After editing, right-click each browser source in OBS → **Refresh**.
+*(Untick **"Shutdown source when not visible"** and **"Refresh browser when scene becomes active"** on all browser sources.)*
 
-## 2. Add each page to OBS
-For every file below: **Sources → + → Browser** →
-- tick **Local file**, browse to the `.html` file
-- set Width/Height as listed
-- **untick "Shutdown source when not visible"** (otherwise the 15-minute banner timer restarts every scene switch)
-- untick "Refresh browser when scene becomes active"
+## 2. TikTok Gameplay Scene (1080×1920 Full-Screen)
+1. Add your **Game Capture** full-screen on the bottom layer, with `tiktok/gameplay.html` (`1080×1920`) above it.
+2. **Facecam:** resize to **480×270** at **X 48, Y 190**.
+3. **Twitch Chat (next to cam):** add `twitch/chat.html` (**480×270**) at **X 552, Y 190**.
 
-| Scene | File | Size |
-|---|---|---|
-| Starting Soon | `twitch/starting-soon.html` | 1920×1080 |
-| Be Right Back | `twitch/brb.html` | 1920×1080 |
-| Ending | `twitch/ending.html` | 1920×1080 |
-| Just Chatting | `twitch/just-chatting.html` | 1920×1080 |
-| Gameplay | `twitch/gameplay.html` (put **above** your game capture) | 1920×1080 |
-| Chat box | `twitch/chat.html` | 448×296 |
-| TikTok scenes | `tiktok/*.html` | 1080×1920 |
+## 3. Other Scenes
+| Scene | File | Size | Notes |
+|---|---|---|---|
+| Starting Soon | `twitch/starting-soon.html` | 1920×1080 | Add `?min=10` for custom countdown |
+| Be Right Back | `twitch/brb.html` | 1920×1080 | |
+| Ending | `twitch/ending.html` | 1920×1080 | |
+| Just Chatting | `twitch/just-chatting.html` | 1920×1080 | Cam `1280×720` at X 60, Y 150; Chat `480×870` at X 1380, Y 150 |
+| TikTok Scenes | `tiktok/{starting-soon,brb,ending}.html` | 1080×1920 | |
 
-**Countdown length:** "Local file" can't take settings, so for a custom countdown untick Local file and use a URL instead:
-`file:///Users/YOU/Documents/0Lejit0-pack/twitch/starting-soon.html?min=10` (minutes). Default is 5.
-
-## 3. Line up your camera and chat (Gameplay scene)
-- **Facecam:** put the webcam source *under* the overlay, then resize it to fill the purple frame
-  bottom-right (frame is 448×252 at X 1432, Y 470). Hold **Alt** (Windows) or **Option** (Mac) while dragging to crop.
-- **Chat:** put `chat.html` (448×296) at **X 1432, Y 744** — it sits in the dark panel under the cam.
-- **Just Chatting:** cam fills the big frame (1280×720 at X 60, Y 150); for chat, use `chat.html`
-  with size 480×870 at X 1380, Y 150.
-- **TikTok gameplay:** cam frame is 560×315 at X 60, Y 250 — kept inside TikTok's safe area
-  (their buttons cover the right edge and bottom).
-
-The chat box reads your Twitch chat directly (no login needed), renders Twitch emotes and role badges (`LIVE`, `MOD`, `VIP`, `FND`, `SUB`), and hides commands starting with `!`. You can override settings in `config.js` or via URL params (`?channel=name&max=14&life=90`).
-
-## 4. Name banner
-Spins in with your name + all handles **every 15 minutes**, stays **12 seconds**, then is fully invisible.
-First appearance is 8 seconds after the scene loads. Change any of this in `config.js`.
-Want to watch it work? Add `?banner=now&every=0.5&hold=4` to the file URL (every 30 s) — remove it after.
-
-## 5. Alerts (StreamElements)
-1. streamelements.com → **Streaming tools → Overlays → New overlay** (1920×1080).
-2. **+ → Static/Custom → Custom widget** → **Open editor**.
-3. Paste each file into its tab: `alerts.html` → HTML, `alerts.css` → CSS,
-   `alerts.js` → JS, `fields.json` → FIELDS. Delete what was there first. **Done**, then save.
-4. In the left panel choose an alert sound, volume, duration, whether to show cheer/tip/sub messages, and which alerts to show.
-5. Copy the overlay URL → OBS **Browser** source, 1920×1080, on top of everything in every scene.
-6. Use the **Emulate** button in the StreamElements editor (or `preview.html` locally) to fire a test follow/sub/raid.
-
-Covers follows, subs (resubs &amp; gift subs with sender), bits, raids and tips. Alerts queue up and never overlap.
+## 4. StreamElements Alerts
+Paste `streamelements/alerts.html`, `alerts.css`, `alerts.js`, and `fields.json` into a Custom Widget in StreamElements (1920×1080), then place the overlay URL on top of all scenes in OBS.

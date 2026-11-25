@@ -7,8 +7,8 @@
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
   :root{--bg:#0d0716;--panel:#160d26;--line:rgba(139,92,246,.45);--purple:#8b5cf6;--teal:#2ee6d6;--text:#f3efff;--muted:#a99cc9}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-columns:300px 1fr}
-  aside{background:var(--panel);border-right:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+  body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:grid;grid-template-columns:300px 1fr}
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;min-height:0}
   .brand{display:flex;align-items:center;gap:12px}
   .brand img{width:40px;height:40px}
   .brand h1{font-size:20px;font-weight:800}
@@ -24,21 +24,24 @@
   .ctrl input[type=number]{width:70px;background:#0d0716;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit}
   .row{display:flex;gap:6px;flex-wrap:wrap}
   .row button{flex:1;text-align:center;font-size:12px;padding:7px 8px}
-  main{display:flex;flex-direction:column;padding:22px;gap:14px;overflow:hidden}
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-  .url{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-  .stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1d1133,#090410);
+  main{display:flex;flex-direction:column;padding:22px;gap:14px;overflow:hidden;min-width:0;min-height:0}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:0}
+  .url{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .stage-wrap{flex:1;min-width:0;min-height:0;background:radial-gradient(circle at 50% 40%,#1d1133,#090410);
     border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}
-  .frame-box{position:relative;transform-origin:center center;box-shadow:0 24px 60px rgba(0,0,0,.6);
-    background:linear-gradient(135deg,#23303d,#342824 60%,#1c2920)}
-  iframe{border:0;display:block;width:100%;height:100%}
+  .frame-box{position:absolute;left:50%;top:50%;transform-origin:center center;box-shadow:0 24px 60px rgba(0,0,0,.6);
+    background:linear-gradient(135deg,#23303d,#342824 60%,#1c2920);overflow:hidden}
+  .frame-box.checker{background-color:#120b1f;
+    background-image:linear-gradient(45deg,#1b122b 25%,transparent 25%),linear-gradient(-45deg,#1b122b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1b122b 75%),linear-gradient(-45deg,transparent 75%,#1b122b 75%);
+    background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+  iframe{border:0;display:block;width:100%;height:100%;position:relative;z-index:2}
 </style>
 </head>
 <body>
 <aside>
   <div class="brand">
     <img src="shared/logo.svg" alt="">
-    <div><h1>0Lejit0 Overlays</h1><p>Local preview &amp; tester</p></div>
+    <div><h1>0Lejit0 Overlays</h1><p>Modular OBS Sources</p></div>
   </div>
 
   <div class="grp">
@@ -47,12 +50,17 @@
   </div>
 
   <div class="grp">
+    <h2>Individual OBS Sources</h2>
+    <div class="list" id="bx-list"></div>
+  </div>
+
+  <div class="grp">
     <h2>TikTok (1080×1920)</h2>
     <div class="list" id="tt-list"></div>
   </div>
 
   <div class="grp">
-    <h2>Widgets</h2>
+    <h2>Alerts</h2>
     <div class="list" id="wg-list"></div>
   </div>
 
@@ -94,20 +102,26 @@
 <script>
 const SCENES = {
   tw: [
+    ['Gameplay (Clean)', 'twitch/gameplay.html', 1920, 1080],
     ['Starting Soon', 'twitch/starting-soon.html', 1920, 1080],
     ['Be Right Back', 'twitch/brb.html', 1920, 1080],
     ['Stream Ending', 'twitch/ending.html', 1920, 1080],
-    ['Just Chatting', 'twitch/just-chatting.html', 1920, 1080],
-    ['Gameplay', 'twitch/gameplay.html', 1920, 1080]
+    ['Just Chatting', 'twitch/just-chatting.html', 1920, 1080]
+  ],
+  bx: [
+    ['Facecam Outline', 'widgets/cam-frame.html', 480, 270],
+    ['Twitch Chat Outline', 'widgets/twitch-chat-frame.html', 380, 260],
+    ['TikTok Chat Outline', 'widgets/tiktok-chat-frame.html', 380, 260],
+    ['Handle Tag (Rotating)', 'widgets/handle-tag.html', 320, 56],
+    ['Name Banner (3D)', 'widgets/name-banner.html', 640, 140]
   ],
   tt: [
+    ['Gameplay (Fullscreen)', 'tiktok/gameplay.html', 1080, 1920],
     ['Starting Soon', 'tiktok/starting-soon.html', 1080, 1920],
     ['Be Right Back', 'tiktok/brb.html', 1080, 1920],
-    ['Stream Ending', 'tiktok/ending.html', 1080, 1920],
-    ['Gameplay', 'tiktok/gameplay.html', 1080, 1920]
+    ['Stream Ending', 'tiktok/ending.html', 1080, 1920]
   ],
   wg: [
-    ['Twitch Chat', 'twitch/chat.html', 448, 296],
     ['Alerts (SE)', 'streamelements/alerts.html', 1200, 380]
   ]
 };
@@ -128,15 +142,16 @@ function makeBtns(id, arr){
     el.appendChild(b);
   });
 }
-makeBtns('tw-list', SCENES.tw); makeBtns('tt-list', SCENES.tt); makeBtns('wg-list', SCENES.wg);
+makeBtns('tw-list', SCENES.tw); makeBtns('bx-list', SCENES.bx); makeBtns('tt-list', SCENES.tt); makeBtns('wg-list', SCENES.wg);
 document.querySelector('#tw-list button').classList.add('active');
 
-function buildUrl(){
+function buildUrl(bust){
   const [, path] = cur;
   const params = new URLSearchParams();
   if (freezeIn.checked) params.set('preview', '');
   if (path.includes('starting-soon')) params.set('min', minIn.value || 5);
-  if (forceBanner) { params.set('banner', 'now'); params.set('every', '0.35'); params.set('hold', '6'); }
+  if (forceBanner || path.includes('name-banner')) { params.set('banner', 'now'); params.set('every', '0.35'); params.set('hold', '6'); }
+  if (bust) params.set('_', Date.now());
   const qs = params.toString().replace(/=&|=$/g, m => m.endsWith('&') ? '&' : '');
   return path + (qs ? '?' + qs : '');
 }
@@ -146,19 +161,20 @@ function fit(){
   const r = wrap.getBoundingClientRect();
   const s = Math.min((r.width - 36) / w, (r.height - 36) / h, 1);
   box.style.width = w + 'px'; box.style.height = h + 'px';
-  box.style.transform = `scale(${s})`;
+  box.style.transform = `translate(-50%, -50%) scale(${s})`;
 }
 
 function load(){
   const isAlert = cur[1].includes('alerts.html');
   document.getElementById('alert-box').style.display = isAlert ? '' : 'none';
   if (isAlert) {
+    box.classList.add('checker');
     loadAlertPreview();
   } else {
-    const u = buildUrl();
+    box.classList.toggle('checker', cur[1].includes('widgets/'));
     frm.removeAttribute('srcdoc');
-    frm.src = u;
-    urlOut.textContent = new URL(u, location.href).href;
+    frm.src = buildUrl(true);
+    urlOut.textContent = new URL(buildUrl(false), location.href).href;
   }
   fit();
 }
