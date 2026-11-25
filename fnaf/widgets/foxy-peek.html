@@ -1,0 +1,96 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Foxy Left Peek — FNaF</title>
+<script src="../shared/config.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100vw;height:100vh;background:transparent!important;overflow:hidden}
+  .wrap{position:absolute;inset:0;visibility:hidden;pointer-events:none;overflow:hidden}
+  .wrap.on,.wrap.off{visibility:visible}
+  /* Shows only the left doorway slice of the GIF where Foxy leans in */
+  .crop{position:relative;width:100%;height:100%;overflow:hidden;
+    -webkit-mask-image:radial-gradient(ellipse 88% 90% at 24% 55%,#000 50%,rgba(0,0,0,.6) 72%,transparent 96%);
+    mask-image:radial-gradient(ellipse 88% 90% at 24% 55%,#000 50%,rgba(0,0,0,.6) 72%,transparent 96%)}
+  .foxy{position:absolute;left:-2%;top:0;height:100%;width:auto;max-width:none;display:block;
+    filter:contrast(1.18) brightness(1.08) drop-shadow(0 0 14px rgba(0,0,0,.9))}
+  .screen .foxy{mix-blend-mode:screen}
+  .wrap.on .crop{animation:foxyIn .38s cubic-bezier(.2,.95,.25,1.08) both}
+  .wrap.off .crop{animation:foxyOut .32s ease-in both}
+  @keyframes foxyIn{0%{transform:translateX(-105%);opacity:0}100%{transform:translateX(0);opacity:1}}
+  @keyframes foxyOut{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-105%);opacity:0}}
+</style></head>
+<body>
+<div class="wrap" id="w">
+  <div class="crop"><img class="foxy" id="img" src="../twitch/16e81a48b8181a9a90b17fe21a7712b3.gif" alt="Foxy"></div>
+</div>
+<audio id="snd" preload="auto"></audio>
+<script>
+const q = new URLSearchParams(location.search);
+const cfg = (window.OLEJIT && OLEJIT.peek) || {};
+const w = document.getElementById('w'), snd = document.getElementById('snd');
+if (q.get('blend') === 'screen') w.classList.add('screen');
+
+const muted = q.has('mute');
+const vol = Math.min(1, Math.max(0, q.has('vol') ? parseFloat(q.get('vol')) : (cfg.volume ?? 0.6)));
+const soundUrl = q.get('sound') || cfg.sound || '';
+let hasAudioFile = false;
+
+if (soundUrl && !muted) {
+  snd.src = soundUrl;
+  snd.volume = vol;
+  snd.oncanplaythrough = () => { hasAudioFile = true; };
+  snd.onerror = () => { hasAudioFile = false; };
+}
+
+function playStinger(){
+  if (muted || vol <= 0) return;
+  if (hasAudioFile) {
+    snd.currentTime = 0;
+    snd.play().catch(() => {});
+    return;
+  }
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.35 * vol, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    gain.connect(ctx.destination);
+
+    // Subtle FNaF-style low thud + metallic stinger
+    const sub = ctx.createOscillator();
+    sub.type = 'sine'; sub.frequency.setValueAtTime(110, now);
+    sub.frequency.exponentialRampToValueAtTime(38, now + 0.45);
+    sub.connect(gain); sub.start(now); sub.stop(now + 0.5);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(290, now);
+    osc.frequency.exponentialRampToValueAtTime(145, now + 0.48);
+    const flt = ctx.createBiquadFilter();
+    flt.type = 'bandpass'; flt.frequency.setValueAtTime(750, now); flt.Q.value = 3;
+    osc.connect(flt); flt.connect(gain); osc.start(now); osc.stop(now + 0.52);
+  } catch (_) {}
+}
+
+if (q.has('preview')) {
+  w.classList.add('on');
+} else {
+  const hold = (parseFloat(q.get('hold')) || cfg.holdSeconds || 0.75) * 1000;
+  const minMs = (parseFloat(q.get('every')) || cfg.minMinutes || 10) * 60000;
+  const maxMs = (parseFloat(q.get('every')) || cfg.maxMinutes || 15) * 60000;
+  const firstDelay = q.has('peek') ? 150 : (cfg.firstDelaySeconds || 90) * 1000;
+
+  function trigger(){
+    playStinger();
+    w.classList.remove('off'); w.classList.add('on');
+    setTimeout(() => {
+      w.classList.remove('on'); w.classList.add('off');
+      setTimeout(() => {
+        w.classList.remove('off');
+        setTimeout(trigger, minMs + Math.random() * Math.max(0, maxMs - minMs));
+      }, 360);
+    }, hold);
+  }
+  setTimeout(trigger, firstDelay);
+}
+</script>
+</body></html>
